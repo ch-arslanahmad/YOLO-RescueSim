@@ -8,7 +8,83 @@ This will include list of commands used in the project.
 source /opt/ros/jazzy/setup.bash && echo "ROS Jazzy Loaded!"
 ```
 
-## 2. Launch TurtleBot3 in Gazebo.
+## 2. Exploring ROS Packages & Gazebo Resources
+
+### List all ROS installed packages:
+
+```bash
+ros2 pkg list
+```
+
+### Find specific ROS packages:
+```bash
+ros2 pkg list | grep <search_term>
+```
+
+### Get package information:
+```bash
+ros2 pkg prefix <package_name>  # show install location
+ros2 pkg executables <package_name>  # list executables in package
+```
+
+### List Gazebo plugins:
+```bash
+gz plugin --list
+```
+
+### Check Gazebo/ROS environment variables:
+```bash
+printenv | grep ROS
+printenv | grep GZ
+env | grep -E '(GZ_SIM|GAZEBO)'
+```
+
+### Show Gazebo resource paths:
+```bash
+echo $GZ_SIM_RESOURCE_PATH
+echo $GZ_SIM_SYSTEM_PLUGIN_PATH
+```
+
+### List installed Gazebo models:
+```bash
+# System models
+ls /usr/share/gz/gz-sim*/models 2>/dev/null || echo "Path may vary"
+# User models
+ls ~/.gz/models 2>/dev/null || echo "No user models found"
+```
+
+### List all active ROS nodes:
+```bash
+ros2 node list
+```
+
+### List all active topics:
+```bash
+ros2 topic list
+```
+
+### List all services:
+```bash
+ros2 service list
+```
+
+### List installed ROS/Gazebo packages (via apt):
+```bash
+apt list --installed | grep ros-jazzy-
+apt list --installed | grep gz-
+# or use dpkg
+dpkg -l | grep ros-jazzy
+dpkg -l | grep gz-
+```
+
+### Search for available (not yet installed) packages:
+```bash
+apt search ros-jazzy-
+apt search gz-
+```
+
+
+## 3. Launch TurtleBot3 in Gazebo.
 
 The following opens the default world.
 
@@ -44,7 +120,7 @@ ros2 topic list
 ```
 
 
-## 3. Using the TurtleBot3 Camera
+## 4. Using the TurtleBot3 Camera
 
 The camera is enabled by default in the TurtleBot3 simulation. To view or use the camera feed:
 
@@ -74,7 +150,7 @@ The camera is ready for use by any ROS 2 node (e.g., YOLO perception) as soon as
 Keep in mind, it works in X11 better...
 
 
-## 4. Troubleshooting: TurtleBot Moves Unexpectedly
+## 5. Troubleshooting: TurtleBot Moves Unexpectedly
 
 If your TurtleBot starts moving on its own in simulation, follow these steps:
 

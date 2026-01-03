@@ -2,8 +2,6 @@
 
 ## Installation Guide
 
-
-
 The latest version is ROS2.
 
 ### Step 1 - Add the ROS2 Repo
@@ -62,4 +60,16 @@ sudo apt update
 ```
 
 There are commands for it to work alongside Gazebo-ROS, plugins etc, explained [here](commands.md)
+
+
+## Using the Built-in Camera in TurtleBot3
+
+The official TurtleBot3 models (Burger, Waffle) provided by the `turtlebot3_gazebo` package already include a simulated camera sensor in their URDF/SDF definitions. This means:
+
+- When you spawn the TurtleBot3 model in Gazebo using standard ROS 2 launch files, the camera is automatically present and simulated.
+- The camera publishes image data to the `/camera/image_raw` topic in ROS 2, which can be used directly by your perception nodes (e.g., YOLO-Lite).
+- No extra configuration or model editing is needed unless you want a custom camera setup (different position, FOV, etc.).
+- This ensures full ROS 2–Gazebo integration and saves development time.
+
+**In summary:** By using the built-in camera, you get a working, simulated camera on the robot “for free” with the standard TurtleBot3 model, ready for your computer vision and perception tasks.
 
