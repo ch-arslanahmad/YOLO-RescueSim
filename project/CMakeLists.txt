@@ -15,7 +15,15 @@ find_package(rclcpp REQUIRED)
 ament_python_install_package(project)
 
 # Install Python executables
-# Removed autonomous navigation executables
+install(PROGRAMS
+  navigation_scripts/calibration/keyboard_controller.py
+  navigation_scripts/calibration/coordinate_tracker.py
+  navigation_scripts/navigation/waypoint_navigator.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install navigation scripts as packages
+ament_python_install_package(navigation_scripts)
 
 # Install launch files
 install(DIRECTORY

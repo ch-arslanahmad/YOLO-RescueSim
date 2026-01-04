@@ -11,9 +11,9 @@ echo "================================"
 # Source ROS
 if [ -f /opt/ros/jazzy/setup.bash ]; then
     source /opt/ros/jazzy/setup.bash
-    echo "✓ ROS 2 Jazzy sourced"
+    echo "OK: ROS 2 Jazzy sourced"
 else
-    echo "✗ ROS 2 Jazzy not found!"
+    echo "ERROR: ROS 2 Jazzy not found!"
     exit 1
 fi
 
@@ -29,9 +29,9 @@ PACKAGES=(
 
 for pkg in "${PACKAGES[@]}"; do
     if ros2 pkg list | grep -q "$pkg"; then
-        echo "✓ ros-jazzy-$pkg installed"
+        echo "OK: ros-jazzy-$pkg installed"
     else
-        echo "✗ ros-jazzy-$pkg not found, installing..."
+        echo "WARN: ros-jazzy-$pkg not found, installing..."
         sudo apt-get install -y "ros-jazzy-$pkg"
     fi
 done
@@ -53,7 +53,7 @@ chmod +x "$HOME/Desktop/github/YOLO-RescueSim/project/navigation_tester.py"
 chmod +x "$HOME/Desktop/github/YOLO-RescueSim/project/launch/navigation_stack.launch.py"
 chmod +x "$HOME/Desktop/github/YOLO-RescueSim/project/launch/rescue_sim.launch.py"
 
-echo "✓ Scripts made executable"
+echo "OK: Scripts made executable"
 
 # Build colcon workspace if needed
 PROJECT_DIR="$HOME/Desktop/github/YOLO-RescueSim"
@@ -62,7 +62,7 @@ if [ -f "$PROJECT_DIR/src/package.xml" ] || [ -f "$PROJECT_DIR/package.xml" ]; t
     echo "Building ROS workspace..."
     cd "$PROJECT_DIR"
     colcon build --symlink-install || true
-    echo "✓ Workspace built"
+    echo "OK: Workspace built"
 fi
 
 # Summary
