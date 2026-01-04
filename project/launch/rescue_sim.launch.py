@@ -53,24 +53,13 @@ def generate_launch_description():
 
     # ========== GAZEBO LAUNCH ACTIONS ==========
     
-    # 1. Start Gazebo server (physics, sensors, plugins) with custom world
-    gzserver_cmd = IncludeLaunchDescription(
+    # 1. Start Gazebo (server + GUI) with custom world
+    gazebo_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(ros_gz_sim_dir, 'launch', 'gz_sim.launch.py')
         ),
         launch_arguments={
-            'gz_args': ['-r -s -v2 ', world_sdf_path],  # -r: run, -s: server, -v2: verbose
-            'on_exit_shutdown': 'true'
-        }.items()
-    )
-
-    # 2. Start Gazebo client (GUI) - separate from server for flexibility
-    gzclient_cmd = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(ros_gz_sim_dir, 'launch', 'gz_sim.launch.py')
-        ),
-        launch_arguments={
-            'gz_args': '-g -v2 ',  # -g: GUI, -v2: verbose
+            'gz_args': ['-r -v2 ', world_sdf_path],  # -r: run, -v2: verbose
             'on_exit_shutdown': 'true'
         }.items()
     )
@@ -110,12 +99,9 @@ def generate_launch_description():
     )
 
     # 5. Bridge ROS 2 topics to Gazebo topics via ros_gz_bridge
-    #    Reads from bridge config file that defines topic mappings
-    bridge_params = os.path.join(
-        turtlebot3_gazebo_dir,
-        'params',
-        f'{model_folder}_bridge.yaml'
-    )
+    #    Uses YAML config file for flexible topic mappings
+    project_dir = get_package_share_directory('project')
+    bridge_params = os.path.join(project_dir, 'config', 'turtlebot3_burger_bridge.yaml')
 
     bridge_cmd = Node(
         package='ros_gz_bridge',
@@ -166,8 +152,7 @@ def generate_launch_description():
 
     # Add actions in dependency order
     ld.add_action(set_env_vars_resources)  # Set paths first
-    ld.add_action(gzserver_cmd)             # Start Gazebo physics engine
-    ld.add_action(gzclient_cmd)             # Start Gazebo GUI
+    ld.add_action(gazebo_cmd)               # Start Gazebo (server + GUI)
     ld.add_action(robot_state_publisher_cmd)  # Publish TF
     ld.add_action(spawn_turtlebot_cmd)      # Spawn robot model
     ld.add_action(bridge_cmd)               # Bridge ROS 2 ↔ Gazebo topics
