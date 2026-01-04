@@ -48,11 +48,6 @@
       <pose>0 0 0 0 0 0</pose>
       <self_collide>false</self_collide>
     </model>
-    <include>
-      <uri>file:///opt/ros/jazzy/share/turtlebot3_gazebo/models/turtlebot3_waffle</uri>
-      <name>waffle</name>
-      <pose>-2.0006537207294279 -0.50000000609196027 0.010007281061733464 -1.6161431235863735e-09 -0.0056917727207861871 -3.9125389362192409e-06</pose>
-    </include>
     <light name='sun' type='directional'>
       <pose>0 0 10 0 0 0</pose>
       <cast_shadows>true</cast_shadows>
