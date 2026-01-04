@@ -15,11 +15,7 @@ find_package(rclcpp REQUIRED)
 ament_python_install_package(project)
 
 # Install Python executables
-install(PROGRAMS
-  project/auto_navigation.py
-  project/navigation_tester.py
-  DESTINATION lib/${PROJECT_NAME}
-)
+# Removed autonomous navigation executables
 
 # Install launch files
 install(DIRECTORY
