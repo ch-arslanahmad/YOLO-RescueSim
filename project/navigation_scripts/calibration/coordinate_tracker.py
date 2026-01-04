@@ -36,8 +36,14 @@ class CoordinateTracker(Node):
         
         # Waypoints file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        self.waypoints_dir = os.path.join(
-            os.path.dirname(__file__), '..', 'waypoints')
+        repo_root_waypoints = os.path.join(os.getcwd(), 'waypoints')
+        workspace_waypoints = os.path.join(os.getcwd(), 'project', 'navigation_scripts', 'waypoints')
+        if os.path.isdir(repo_root_waypoints):
+            self.waypoints_dir = repo_root_waypoints
+        elif os.path.isdir(workspace_waypoints):
+            self.waypoints_dir = workspace_waypoints
+        else:
+            self.waypoints_dir = os.path.join(os.path.dirname(__file__), '..', 'waypoints')
         os.makedirs(self.waypoints_dir, exist_ok=True)
         self.waypoints_file = os.path.join(
             self.waypoints_dir, f'waypoints_{timestamp}.csv')

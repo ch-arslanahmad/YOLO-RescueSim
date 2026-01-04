@@ -4,21 +4,21 @@
 bridges:
   # Velocity commands (ROS 2 -> Gazebo)
   - ros_topic_name: "/cmd_vel"
-    gz_topic_name: "/model/turtlebot3_burger/cmd_vel"
+    gz_topic_name: "/cmd_vel"
     ros_type_name: "geometry_msgs/msg/Twist"
     gz_type_name: "gz.msgs.Twist"
     direction: ROS_TO_GZ
 
   # Odometry (Gazebo -> ROS 2)
   - ros_topic_name: "/odom"
-    gz_topic_name: "/model/turtlebot3_burger/odometry"
+    gz_topic_name: "/odom"
     ros_type_name: "nav_msgs/msg/Odometry"
     gz_type_name: "gz.msgs.Odometry"
     direction: GZ_TO_ROS
 
   # Laser scan (Gazebo -> ROS 2)
   - ros_topic_name: "/scan"
-    gz_topic_name: "/model/turtlebot3_burger/sensor/lidar_link/scan"
+    gz_topic_name: "/scan"
     ros_type_name: "sensor_msgs/msg/LaserScan"
     gz_type_name: "gz.msgs.LaserScan"
     direction: GZ_TO_ROS
@@ -32,21 +32,21 @@ bridges:
 
   # Joint state (Gazebo -> ROS 2)
   - ros_topic_name: "/joint_states"
-    gz_topic_name: "/model/turtlebot3_burger/joint_state"
+    gz_topic_name: "/joint_states"
     ros_type_name: "sensor_msgs/msg/JointState"
     gz_type_name: "gz.msgs.Model"
     direction: GZ_TO_ROS
 
   # IMU (Gazebo -> ROS 2)
   - ros_topic_name: "/imu"
-    gz_topic_name: "/model/turtlebot3_burger/sensor/imu_link/imu"
+    gz_topic_name: "/imu"
     ros_type_name: "sensor_msgs/msg/Imu"
     gz_type_name: "gz.msgs.IMU"
     direction: GZ_TO_ROS
 
   # Camera image (Gazebo -> ROS 2)
   - ros_topic_name: "/camera/image_raw"
-    gz_topic_name: "/world/default/model/turtlebot3_burger/link/camera_link/sensor/camera/image"
+    gz_topic_name: "/camera/image_raw"
     ros_type_name: "sensor_msgs/msg/Image"
     gz_type_name: "gz.msgs.Image"
     direction: GZ_TO_ROS

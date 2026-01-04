@@ -61,6 +61,11 @@ sudo apt update
 
 There are commands for it to work alongside Gazebo-ROS, plugins etc, explained [here](commands.md)
 
+## Adding Camera
+
+```bash
+sudo apt install ros-jazzy-image-view # 
+```
 
 ## Using the Built-in Camera in TurtleBot3
 

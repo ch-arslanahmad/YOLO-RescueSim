@@ -38,4 +38,10 @@ install(FILES
   DESTINATION share/${PROJECT_NAME}
 )
 
+# Install custom Gazebo models (e.g., TurtleBot3 wrapper with camera)
+install(DIRECTORY
+  models/
+  DESTINATION share/${PROJECT_NAME}/models
+)
+
 ament_package()

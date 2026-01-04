@@ -28,6 +28,7 @@ Notes:
     - Option 3 runs teleop keyboard (Ctrl+C to stop)
     - Option 4 runs the manual waypoint recorder (type 'd' for demo)
     - Option 5 runs open-loop waypoint playback (no /odom required)
+    - Option 7 opens a camera viewer for /camera/image_raw
 EOF
 }
 
@@ -110,6 +111,7 @@ print_menu() {
     echo "  4) Start manual waypoint recorder (then type 'd')"
     echo "  5) Play waypoints (open-loop, no /odom)"
     echo "  6) Clean and rebuild project"
+    echo "  7) View TurtleBot camera (/camera/image_raw)"
     echo "  q) Quit"
 }
 
@@ -154,7 +156,17 @@ case "$choice" in
         set_tb3_model
         echo -e "${YELLOW}Starting open-loop waypoint playback...${NC}"
         echo -e "${YELLOW}Tip: Make sure the simulation is already running (option 1) in another terminal.${NC}\n"
+        if [ -f "$PROJECT_ROOT/waypoints/waypoints_camera_scan.csv" ]; then
+            export WAYPOINT_CSV="$PROJECT_ROOT/waypoints/waypoints_camera_scan.csv"
+            echo -e "${GREEN}OK: Auto-selecting WAYPOINT_CSV=$WAYPOINT_CSV${NC}"
+        elif [ -f "$PROJECT_ROOT/project/navigation_scripts/waypoints/waypoints_camera_scan.csv" ]; then
+            export WAYPOINT_CSV="$PROJECT_ROOT/project/navigation_scripts/waypoints/waypoints_camera_scan.csv"
+            echo -e "${GREEN}OK: Auto-selecting WAYPOINT_CSV=$WAYPOINT_CSV${NC}"
+        else
+            unset WAYPOINT_CSV || true
+        fi
         /usr/bin/python3 -c "from navigation_scripts.navigation.open_loop_waypoint_player import main; main()"
+        unset WAYPOINT_CSV || true
         ;;
     6)
         echo -e "${YELLOW}Cleaning build/install directories...${NC}"
@@ -172,6 +184,19 @@ case "$choice" in
         else
             echo -e "${RED}ERROR: Build failed${NC}"
             exit 1
+        fi
+        ;;
+    7)
+        ensure_project_overlay
+        echo -e "${YELLOW}Opening camera viewer for /camera/image_raw...${NC}"
+        echo -e "${YELLOW}Tip: Make sure the sim is running (option 1) in another terminal.${NC}\n"
+
+        # Auto-select the topic (no GUI dropdown needed).
+        if ros2 run image_view image_view --ros-args -r image:=/camera/image_raw; then
+            :
+        else
+            echo -e "${YELLOW}WARN: image_view not available. Falling back to rqt_image_view...${NC}"
+            ros2 run rqt_image_view rqt_image_view /camera/image_raw
         fi
         ;;
     q|Q)

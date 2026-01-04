@@ -23,11 +23,16 @@
   <depend>tf2_ros</depend>
   <depend>gazebo_ros</depend>
   <depend>robot_state_publisher</depend>
+  <depend>cv_bridge</depend>
+  <depend>image_transport</depend>
 
   
   <test_depend>ament_lint_common</test_depend>
   
   <export>
     <build_type>ament_cmake</build_type>
+    <exec_depend>ultralytics</exec_depend>
+    <exec_depend>opencv-python</exec_depend>
+    <exec_depend>torch</exec_depend>
   </export>
 </package>

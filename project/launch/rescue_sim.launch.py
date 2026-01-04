@@ -28,7 +28,7 @@ def generate_launch_description():
     
     # Print confirmation
     print("\n" + "="*60)
-    print("🤖 YOLO-RescueSim Launch Script Loaded")
+    print("YOLO-RescueSim Launch Script Loaded")
     print(f"   Robot Model: {os.environ.get('TURTLEBOT3_MODEL', 'burger')}")
     print(f"   World File: turtle.sdf")
     print("="*60 + "\n")
@@ -41,15 +41,20 @@ def generate_launch_description():
     turtlebot3_gazebo_dir = get_package_share_directory('turtlebot3_gazebo')
     launch_file_dir = os.path.join(turtlebot3_gazebo_dir, 'launch')
     ros_gz_sim_dir = get_package_share_directory('ros_gz_sim')
-    
-    # Path to custom world.sdf (absolute path from project directory)
-    project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-    world_sdf_path = '/home/arslan/Desktop/github/YOLO-RescueSim/project/turtle.sdf'
+    project_dir = get_package_share_directory('project')
+
+    # World file
+    # Prefer the source-tree turtle.sdf when running from the workspace.
+    # This makes it easier to iterate on the world without rebuilding.
+    installed_world_sdf_path = os.path.join(project_dir, 'turtle.sdf')
+    source_world_sdf_path = str((Path(__file__).resolve().parents[1] / 'turtle.sdf'))
+    default_world_sdf_path = source_world_sdf_path if os.path.exists(source_world_sdf_path) else installed_world_sdf_path
     
     # Launch configuration variables with defaults
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
-    x_pose = LaunchConfiguration('x_pose', default='0.0')
-    y_pose = LaunchConfiguration('y_pose', default='0.0')
+    world_sdf_path = LaunchConfiguration('world', default=default_world_sdf_path)
+    x_pose = LaunchConfiguration('x_pose', default='-2.0')
+    y_pose = LaunchConfiguration('y_pose', default='-0.5')
 
     # ========== GAZEBO LAUNCH ACTIONS ==========
     
@@ -76,14 +81,32 @@ def generate_launch_description():
 
     # ========== TURTLEBOT3 SPAWNING & BRIDGING ==========
     
-    # 4. Spawn TurtleBot3 into Gazebo using ros_gz_sim's 'create' service
+    # 4. Spawn TurtleBot3 using ros_gz_sim
+    # Prefer camera-equipped model variants when available (e.g., turtlebot3_burger_cam).
     model_folder = f'turtlebot3_{TURTLEBOT3_MODEL}'
-    urdf_path = os.path.join(
-        turtlebot3_gazebo_dir,
-        'models',
-        model_folder,
-        'model.sdf'
+    model_folder_cam = f'{model_folder}_cam'
+
+    upstream_model_sdf_path = os.path.join(turtlebot3_gazebo_dir, 'models', model_folder, 'model.sdf')
+    upstream_camera_model_sdf_path = os.path.join(
+        turtlebot3_gazebo_dir, 'models', model_folder_cam, 'model.sdf'
     )
+
+    # Prefer a workspace-provided wrapper model with a camera sensor.
+    source_wrapper_sdf_path = str(
+        (Path(__file__).resolve().parents[1] / 'models' / 'turtlebot3_burger_with_camera' / 'model.sdf')
+    )
+    installed_wrapper_sdf_path = os.path.join(
+        project_dir, 'models', 'turtlebot3_burger_with_camera', 'model.sdf'
+    )
+
+    if os.path.exists(upstream_camera_model_sdf_path):
+        urdf_path = upstream_camera_model_sdf_path
+    elif os.path.exists(source_wrapper_sdf_path):
+        urdf_path = source_wrapper_sdf_path
+    elif os.path.exists(installed_wrapper_sdf_path):
+        urdf_path = installed_wrapper_sdf_path
+    else:
+        urdf_path = upstream_model_sdf_path
 
     spawn_turtlebot_cmd = Node(
         package='ros_gz_sim',
@@ -93,23 +116,23 @@ def generate_launch_description():
             '-file', urdf_path,
             '-x', x_pose,
             '-y', y_pose,
-            '-z', '0.01'  # Small offset to avoid initial collision with ground
+            '-z', '0.2'
         ],
         output='screen',
     )
 
     # 5. Bridge ROS 2 topics to Gazebo topics via ros_gz_bridge
-    #    Uses YAML config file for flexible topic mappings
-    project_dir = get_package_share_directory('project')
-    bridge_params = os.path.join(project_dir, 'config', 'turtlebot3_burger_bridge.yaml')
-
+    #    Maps ROS topics to Gazebo topics (cmd_vel, odom, scan, etc)
     bridge_cmd = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
         arguments=[
-            '--ros-args',
-            '-p',
-            f'config_file:={bridge_params}',
+            '/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist',
+            '/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry',
+            '/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan',
+            '/tf@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V',
+            '/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model',
+            '/imu@sensor_msgs/msg/Imu[gz.msgs.IMU',
         ],
         output='screen',
     )
@@ -138,15 +161,19 @@ def generate_launch_description():
 
     # Declare launch arguments
     ld.add_action(DeclareLaunchArgument(
+        'world', default_value=default_world_sdf_path,
+        description='Path to the Gazebo world SDF (turtle.sdf)'
+    ))
+    ld.add_action(DeclareLaunchArgument(
         'use_sim_time', default_value='true',
         description='Use simulation (Gazebo) clock'
     ))
     ld.add_action(DeclareLaunchArgument(
-        'x_pose', default_value='0.0',
+        'x_pose', default_value='-2.0',
         description='Initial X position of robot'
     ))
     ld.add_action(DeclareLaunchArgument(
-        'y_pose', default_value='0.0',
+        'y_pose', default_value='-0.5',
         description='Initial Y position of robot'
     ))
 

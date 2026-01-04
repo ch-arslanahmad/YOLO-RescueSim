@@ -310,6 +310,27 @@
       <name>pallet_box_0</name>
       <pose>14.0222 -24.335000000000001 0.01 0 0 0</pose>
     </include>
+    <!-- Human Models for Rescue Simulation -->
+    <include>
+      <uri>https://fuel.ignitionrobotics.org/1.0/OpenRobotics/models/Ground%20Robot</uri>
+      <name>human_1</name>
+      <pose>-2.0 5.0 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>https://fuel.ignitionrobotics.org/1.0/OpenRobotics/models/Ground%20Robot</uri>
+      <name>human_2</name>
+      <pose>8.0 3.0 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>https://fuel.ignitionrobotics.org/1.0/OpenRobotics/models/Ground%20Robot</uri>
+      <name>human_3</name>
+      <pose>10.0 -15.0 0 0 0 0</pose>
+    </include>
+    <include>
+      <uri>https://fuel.ignitionrobotics.org/1.0/OpenRobotics/models/Ground%20Robot</uri>
+      <name>human_4</name>
+      <pose>-8.0 -20.0 0 0 0 0</pose>
+    </include>
     <!-- Sunlight for scene illumination -->
     <light name='sun' type='directional'>
       <pose>-5 -3 10 0 0 0</pose>

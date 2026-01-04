@@ -49,6 +49,22 @@ def _normalize_angle(angle: float) -> float:
     return angle
 
 
+def _workspace_waypoints_dir() -> str | None:
+    """Return the workspace waypoints directory if running from repo root."""
+    candidate = os.path.join(os.getcwd(), "project", "navigation_scripts", "waypoints")
+    if os.path.isdir(candidate):
+        return candidate
+    return None
+
+
+def _repo_root_waypoints_dir() -> str | None:
+    """Return the repo-root waypoints directory if present (preferred for persistence)."""
+    candidate = os.path.join(os.getcwd(), "waypoints")
+    if os.path.isdir(candidate):
+        return candidate
+    return None
+
+
 def _read_float(row: dict, key: str) -> float | None:
     value = row.get(key)
     if value is None:
@@ -114,7 +130,13 @@ def load_waypoints_csv(path: str) -> list[Waypoint]:
 
 def _find_most_recent_csv() -> str | None:
     """Find the most recently modified waypoint CSV file."""
+    repo_root_dir = _repo_root_waypoints_dir()
+    workspace_dir = _workspace_waypoints_dir()
     search_paths = [
+        # Repo root (preferred)
+        os.path.join(repo_root_dir, "*.csv") if repo_root_dir else "",
+        # Workspace (preferred)
+        os.path.join(workspace_dir, "*.csv") if workspace_dir else "",
         # Build directory (source)
         os.path.join(
             os.path.dirname(__file__), "..", "waypoints", "*.csv"
@@ -137,6 +159,8 @@ def _find_most_recent_csv() -> str | None:
 
     all_csvs = []
     for pattern in search_paths:
+        if not pattern:
+            continue
         matches = glob.glob(pattern)
         all_csvs.extend(matches)
 
@@ -150,7 +174,11 @@ def _find_most_recent_csv() -> str | None:
 
 def _find_csv_by_name(name: str) -> str | None:
     """Search for a CSV file by partial name (case-insensitive)."""
+    repo_root_dir = _repo_root_waypoints_dir()
+    workspace_dir = _workspace_waypoints_dir()
     search_paths = [
+        os.path.join(repo_root_dir, "*.csv") if repo_root_dir else "",
+        os.path.join(workspace_dir, "*.csv") if workspace_dir else "",
         os.path.join(os.path.dirname(__file__), "..", "waypoints", "*.csv"),
         os.path.expanduser("~/.local/lib/python*/site-packages/navigation_scripts/waypoints/*.csv"),
         os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "waypoints", "*.csv"),
@@ -158,6 +186,8 @@ def _find_csv_by_name(name: str) -> str | None:
 
     name_lower = name.lower()
     for pattern in search_paths:
+        if not pattern:
+            continue
         for path in glob.glob(pattern):
             if name_lower in os.path.basename(path).lower():
                 return path
@@ -167,7 +197,11 @@ def _find_csv_by_name(name: str) -> str | None:
 
 def _find_all_csvs() -> list[str]:
     """Find all waypoint CSV files with data, sorted by mtime (most recent first)."""
+    repo_root_dir = _repo_root_waypoints_dir()
+    workspace_dir = _workspace_waypoints_dir()
     search_paths = [
+        os.path.join(repo_root_dir, "*.csv") if repo_root_dir else "",
+        os.path.join(workspace_dir, "*.csv") if workspace_dir else "",
         os.path.join(os.path.dirname(__file__), "..", "waypoints", "*.csv"),
         os.path.expanduser("~/.local/lib/python*/site-packages/navigation_scripts/waypoints/*.csv"),
         os.path.join(os.path.dirname(__file__), "..", "..", "..", "..", "waypoints", "*.csv"),
@@ -176,6 +210,8 @@ def _find_all_csvs() -> list[str]:
     all_csvs = []
     seen = set()
     for pattern in search_paths:
+        if not pattern:
+            continue
         for path in glob.glob(pattern):
             if path not in seen:
                 # Skip empty CSVs (header only, no data rows)
@@ -286,7 +322,12 @@ def main(args=None):
         print("- Drives using timed /cmd_vel (no /odom required)")
         print("- Before starting: place robot at Waypoint 1 pose in Gazebo\n")
 
-        csv_path = input("Enter waypoint CSV path (or press ENTER to auto-select): ").strip()
+        env_csv = os.environ.get("WAYPOINT_CSV", "").strip()
+        if env_csv:
+            print(f"Using waypoint CSV from WAYPOINT_CSV: {env_csv}")
+            csv_path = env_csv
+        else:
+            csv_path = input("Enter waypoint CSV path (or press ENTER to auto-select): ").strip()
         waypoints = load_waypoints_csv(csv_path)
 
         print(f"\nLoaded {len(waypoints)} waypoints:")

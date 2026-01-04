@@ -11,6 +11,7 @@ Summary of what's actually installed (detected on this machine):
 Already installed (key packages/plugins discovered):
 
 - `ros-jazzy-desktop` - full desktop install with GUI tools
+- `ros_gz_sim` / `ros_gz_bridge` / `ros_gz_image` / `ros_gz_interfaces` - ROS 2 / Gazebo integration packages
 - `ros-jazzy-turtlebot3` - TurtleBot3 metapackage
 - `ros-jazzy-turtlebot3-bringup` - TurtleBot3 bringup package
 - `ros-jazzy-turtlebot3-simulations` - TurtleBot3 simulation packages

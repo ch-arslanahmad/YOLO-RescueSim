@@ -197,21 +197,3 @@ To make stopping the robot even faster, add this alias or function to your `~/.b
 
 After adding, reload your shell or run `source ~/.bashrc`, then use `turtlebot_stop` anytime to instantly stop the robot.
 
-
-# Run Auto Navigation Stack
-
-This loads, Gazebo with TurtleBot3, SLAM Toolbox, Navigation2, and Auto Navigation node all in one command.
-
-```bash
-
-source /opt/ros/jazzy/setup.bash && source ./install/setup.bash && ros2 launch project navigation_stack.launch.py
-
-```
-
-To See Full Visualization, Open RViz in another terminal:
-
-```bash
-
-source /opt/ros/jazzy/setup.bash && source ./install/setup.bash && ros2 run rviz2 rviz2
-
-```

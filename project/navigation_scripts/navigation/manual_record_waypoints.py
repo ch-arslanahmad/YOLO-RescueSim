@@ -34,9 +34,14 @@ class ManualWaypointRecorder(Node):
         self.last_export_path = None
         
         # Output directory
-        self.output_dir = os.path.join(
-            os.path.dirname(__file__), '..', 'waypoints'
-        )
+        repo_root_waypoints = os.path.join(os.getcwd(), 'waypoints')
+        workspace_waypoints = os.path.join(os.getcwd(), 'project', 'navigation_scripts', 'waypoints')
+        if os.path.isdir(repo_root_waypoints):
+            self.output_dir = repo_root_waypoints
+        elif os.path.isdir(workspace_waypoints):
+            self.output_dir = workspace_waypoints
+        else:
+            self.output_dir = os.path.join(os.path.dirname(__file__), '..', 'waypoints')
         os.makedirs(self.output_dir, exist_ok=True)
         
         self.current_x = 0.0

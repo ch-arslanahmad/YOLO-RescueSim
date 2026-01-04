@@ -112,16 +112,12 @@ mv ~/turtlebot4_ws/src/turtlebot4_custom/launch/launch.py \
 
 # Now building Workspace again,
 
+```bash
 cd ~/turtlebot4_ws
 colcon build
 source install/setup.bash
+```
 
-```
-```
-```
-```
-```
-```
 
 #### Flowchart
 
