@@ -1,0 +1,70 @@
+# Build and installation directories
+build/
+install/
+log/
+
+# ROS/Colcon build artifacts
+*.so
+*.o
+*.a
+*.la
+*.lo
+*.pyc
+__pycache__/
+*.egg-info/
+dist/
+*.egg
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.code-workspace
+
+# Python virtual environments
+venv/
+env/
+ENV/
+.env
+
+# Gazebo and RViz files
+.gazebo/
+.rviz/
+*.backup
+
+# OS-specific files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# CMake/Make files (but keep CMakeLists.txt)
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+CTestConfiguration.ini
+CTestCustom.cmake
+CTestTestfile.cmake
+
+# Local setup files (but keep tracked versions)
+colcon_build.rc
+colcon_command_prefix_build.sh*
+*.last
+install_manifest.txt
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.pid
+
+# Package manager lock files (optional - uncomment if needed)
+# package-lock.json
+# poetry.lock
