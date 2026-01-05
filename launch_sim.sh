@@ -384,6 +384,7 @@ case "$choice" in
         # Align the robot spawn pose with the first waypoint so open-loop playback matches.
         WP_CSV=""
         if WP_CSV=$(pick_waypoint_csv); then
+            export WAYPOINT_CSV="$WP_CSV"
             if WP_POSE=$(first_waypoint_pose "$WP_CSV" 2>/dev/null); then
                 WP_X=$(echo "$WP_POSE" | awk '{print $1}')
                 WP_Y=$(echo "$WP_POSE" | awk '{print $2}')
@@ -445,6 +446,7 @@ case "$choice" in
         # Align the robot spawn pose with the first waypoint so open-loop playback matches.
         WP_CSV=""
         if WP_CSV=$(pick_waypoint_csv); then
+            export WAYPOINT_CSV="$WP_CSV"
             if WP_POSE=$(first_waypoint_pose "$WP_CSV" 2>/dev/null); then
                 WP_X=$(echo "$WP_POSE" | awk '{print $1}')
                 WP_Y=$(echo "$WP_POSE" | awk '{print $2}')
