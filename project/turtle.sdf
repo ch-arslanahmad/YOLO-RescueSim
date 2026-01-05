@@ -48,6 +48,67 @@
       <pose>0 0 0 0 0 0</pose>
       <self_collide>false</self_collide>
     </model>
+
+    <!-- Human models.
+         Notes:
+           - Changes won't show until you fully restart Gazebo.
+           - These are placed conservatively to stay inside the TurtleBot3 world and away from dense obstacle areas.
+           - If you want even smaller, reduce SCALE below.
+    -->
+    <model name='human_1'>
+      <static>true</static>
+      <!-- Near center / likely open area -->
+      <pose>0.8 1.2 0 0 0 0</pose>
+      <include merge='true'>
+        <uri>model://walking_person_small</uri>
+      </include>
+    </model>
+    <model name='human_2'>
+      <static>true</static>
+      <!-- Near border (inside) -->
+      <pose>-2.6 0.2 0 0 0 1.57</pose>
+      <include merge='true'>
+        <uri>model://walking_person_small</uri>
+      </include>
+    </model>
+    <model name='human_3'>
+      <static>true</static>
+      <!-- Another border-ish placement -->
+      <pose>2.6 -1.0 0 0 0 -1.57</pose>
+      <include merge='true'>
+        <uri>model://walking_person_small</uri>
+      </include>
+    </model>
+
+    <!-- Additional humans near the middle (behind the central obstacle cluster) -->
+    <model name='human_4'>
+      <static>true</static>
+      <pose>0.2 -0.3 0 0 0 3.14</pose>
+      <include merge='true'>
+        <uri>model://walking_person_small</uri>
+      </include>
+    </model>
+    <model name='human_5'>
+      <static>true</static>
+      <pose>0.6 -0.55 0 0 0 2.6</pose>
+      <include merge='true'>
+        <uri>model://walking_person_small</uri>
+      </include>
+    </model>
+    <model name='human_6'>
+      <static>true</static>
+      <pose>-0.2 -0.55 0 0 0 2.2</pose>
+      <include merge='true'>
+        <uri>model://walking_person_small</uri>
+      </include>
+    </model>
+    <model name='human_7'>
+      <static>true</static>
+      <pose>0.4 -0.85 0 0 0 1.57</pose>
+      <include merge='true'>
+        <uri>model://walking_person_small</uri>
+      </include>
+    </model>
     <light name='sun' type='directional'>
       <pose>0 0 10 0 0 0</pose>
       <cast_shadows>true</cast_shadows>

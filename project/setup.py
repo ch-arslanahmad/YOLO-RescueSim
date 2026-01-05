@@ -26,6 +26,8 @@ setup(
         'console_scripts': [
             'auto_navigation = project.auto_navigation:main',
             'navigation_tester = project.navigation_tester:main',
+            'yolo_detector = project.yolo_detector:main',
+            'human_tracker = project.human_tracker:main',
             'record_waypoints = navigation_scripts.navigation.record_waypoints:main',
             'navigate_waypoints = navigation_scripts.navigation.waypoint_navigator:main',
             'play_waypoints = navigation_scripts.navigation.open_loop_waypoint_player:main',

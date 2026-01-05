@@ -28,11 +28,24 @@ venv/
 env/
 ENV/
 .env
+.venv/
+
+# ROS runtime output
+.ros/
 
 # Gazebo and RViz files
 .gazebo/
 .rviz/
 *.backup
+
+# Generated world exports
+project/turtle_from_csv.sdf
+
+# ML model weights / large binaries
+*.pt
+
+# Debug frames / captures
+frame*.jpg
 
 # OS-specific files
 .DS_Store
@@ -64,6 +77,17 @@ install_manifest.txt
 *.temp
 *.log
 *.pid
+
+# Python tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.cache/
+
+# ROS bag recordings (rosbag2)
+**/rosbag2_*/
+**/*.db3
+**/metadata.yaml
 
 # Package manager lock files (optional - uncomment if needed)
 # package-lock.json

@@ -19,7 +19,22 @@ install(PROGRAMS
   navigation_scripts/calibration/keyboard_controller.py
   navigation_scripts/calibration/coordinate_tracker.py
   navigation_scripts/navigation/waypoint_navigator.py
+  project/yolo_detector.py
+  project/human_tracker.py
   DESTINATION lib/${PROJECT_NAME}
+)
+
+# Install ROS 2 node entrypoints without the .py suffix for convenience
+install(PROGRAMS
+  project/yolo_detector.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME yolo_detector
+)
+
+install(PROGRAMS
+  project/human_tracker.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME human_tracker
 )
 
 # Install navigation scripts as packages

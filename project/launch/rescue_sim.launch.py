@@ -11,6 +11,10 @@
 #   ros2 launch ./launch/rescue_sim.launch.py
 
 import os
+import csv
+import tempfile
+import xml.etree.ElementTree as ET
+from copy import deepcopy
 from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
@@ -18,9 +22,140 @@ from launch import LaunchDescription
 from launch.actions import AppendEnvironmentVariable
 from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
+from launch.actions import OpaqueFunction
+from launch.actions import SetLaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
+
+
+def _default_human_poses_csv_path() -> str:
+    # Keep this relative so it works when the launch file is executed from the
+    # installed location, but the user is running from the repo root.
+    return os.path.join('waypoints', 'human_poses.csv')
+
+
+def _apply_human_poses_from_csv(context, *args, **kwargs):
+    csv_path = LaunchConfiguration('human_poses_csv').perform(context).strip()
+    if not csv_path:
+        return []
+
+    template_path = LaunchConfiguration('world_template').perform(context).strip()
+    if not template_path:
+        template_path = LaunchConfiguration('world').perform(context).strip()
+    if not template_path:
+        raise RuntimeError('No world template available (world_template and world are empty)')
+
+    cache_generated_world_raw = LaunchConfiguration('cache_generated_world').perform(context).strip().lower()
+    cache_generated_world = cache_generated_world_raw in ('1', 'true', 'yes', 'on')
+
+    generated_world_out = LaunchConfiguration('generated_world_out').perform(context).strip()
+    if generated_world_out:
+        out_candidate = Path(generated_world_out)
+        if not out_candidate.is_absolute():
+            out_candidate = Path.cwd() / out_candidate
+        out_path = str(out_candidate)
+    else:
+        out_path = os.path.join(tempfile.gettempdir(), 'turtle_generated.sdf')
+    csv_candidate = Path(csv_path)
+    if not csv_candidate.is_absolute():
+        candidates = [
+            (Path.cwd() / csv_candidate),
+            (Path(template_path).resolve().parent.parent / csv_candidate),
+        ]
+        resolved = next((p for p in candidates if p.exists()), None)
+        if resolved is None:
+            raise RuntimeError(
+                f'human_poses_csv not found: {csv_path}. Tried: ' + ', '.join(str(p) for p in candidates)
+            )
+        csv_path = str(resolved)
+
+    print(f"[rescue_sim] Human poses CSV: {csv_path}")
+    print(f"[rescue_sim] World template: {template_path}")
+    print(f"[rescue_sim] Generated world: {out_path}")
+
+    if cache_generated_world and os.path.exists(out_path):
+        try:
+            out_mtime = os.path.getmtime(out_path)
+            csv_mtime = os.path.getmtime(csv_path)
+            template_mtime = os.path.getmtime(template_path)
+            if out_mtime >= max(csv_mtime, template_mtime):
+                print('[rescue_sim] Using cached generated world (up-to-date).')
+                return [SetLaunchConfiguration('world', out_path)]
+        except OSError:
+            # If any stat fails, fall back to regenerating.
+            pass
+
+    tree = ET.parse(template_path)
+    root = tree.getroot()
+    world = root.find('world')
+    if world is None:
+        raise RuntimeError('No <world> element found in template SDF')
+
+    # Build map of existing models by name
+    models_by_name = {}
+    for model in world.findall('model'):
+        model_name = model.get('name')
+        if model_name:
+            models_by_name[model_name] = model
+
+    prototype = models_by_name.get('human_1')
+
+    def ensure_human_model(name: str):
+        existing = models_by_name.get(name)
+        if existing is not None:
+            return existing
+        if prototype is not None:
+            new_model = deepcopy(prototype)
+            new_model.set('name', name)
+            pose_el = new_model.find('pose')
+            if pose_el is None:
+                pose_el = ET.SubElement(new_model, 'pose')
+            pose_el.text = '0 0 0 0 0 0'
+            world.append(new_model)
+            models_by_name[name] = new_model
+            return new_model
+
+        # Fallback: create a minimal human model that includes the local walking person
+        new_model = ET.Element('model', attrib={'name': name})
+        static_el = ET.SubElement(new_model, 'static')
+        static_el.text = 'true'
+        pose_el = ET.SubElement(new_model, 'pose')
+        pose_el.text = '0 0 0 0 0 0'
+        include_el = ET.SubElement(new_model, 'include')
+        include_el.set('merge', 'true')
+        uri_el = ET.SubElement(include_el, 'uri')
+        uri_el.text = 'model://walking_person_small'
+        world.append(new_model)
+        models_by_name[name] = new_model
+        return new_model
+
+    with open(csv_path, 'r', newline='') as f:
+        reader = csv.DictReader(
+            (row for row in f if row.strip() and not row.lstrip().startswith('#'))
+        )
+
+        # If the file includes a header, DictReader will use it; otherwise user must supply headers.
+        # Expected headers: name,x,y,yaw
+        for row in reader:
+            name = (row.get('name') or '').strip()
+            if not name:
+                continue
+
+            x = (row.get('x') or '').strip()
+            y = (row.get('y') or '').strip()
+            yaw = (row.get('yaw') or '').strip()
+            if not x or not y or not yaw:
+                raise RuntimeError(f'Invalid row for {name}: expected columns name,x,y,yaw')
+
+            target = ensure_human_model(name)
+            pose_el = target.find('pose')
+            if pose_el is None:
+                pose_el = ET.SubElement(target, 'pose')
+            pose_el.text = f'{x} {y} 0 0 0 {yaw}'
+
+    tree.write(out_path)
+    return [SetLaunchConfiguration('world', out_path)]
 
 
 def generate_launch_description():
@@ -43,6 +178,10 @@ def generate_launch_description():
     ros_gz_sim_dir = get_package_share_directory('ros_gz_sim')
     project_dir = get_package_share_directory('project')
 
+    # Local models directory (source tree) and installed models directory
+    source_models_path = str((Path(__file__).resolve().parents[1] / 'models'))
+    installed_models_path = os.path.join(project_dir, 'models')
+
     # World file
     # Prefer the source-tree turtle.sdf when running from the workspace.
     # This makes it easier to iterate on the world without rebuilding.
@@ -53,8 +192,13 @@ def generate_launch_description():
     # Launch configuration variables with defaults
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     world_sdf_path = LaunchConfiguration('world', default=default_world_sdf_path)
-    x_pose = LaunchConfiguration('x_pose', default='-2.0')
+    world_template_path = LaunchConfiguration('world_template', default='')
+    human_poses_csv_path = LaunchConfiguration('human_poses_csv', default=_default_human_poses_csv_path())
+    generated_world_out = LaunchConfiguration('generated_world_out', default='')
+    cache_generated_world = LaunchConfiguration('cache_generated_world', default='false')
+    x_pose = LaunchConfiguration('x_pose', default='1.6')
     y_pose = LaunchConfiguration('y_pose', default='-0.5')
+    yaw_pose = LaunchConfiguration('yaw_pose', default='0.0')
 
     # ========== GAZEBO LAUNCH ACTIONS ==========
     
@@ -116,7 +260,8 @@ def generate_launch_description():
             '-file', urdf_path,
             '-x', x_pose,
             '-y', y_pose,
-            '-z', '0.2'
+            '-z', '0.2',
+            '-Y', yaw_pose,
         ],
         output='screen',
     )
@@ -148,9 +293,17 @@ def generate_launch_description():
 
     # ========== GAZEBO RESOURCE PATH ==========
     
-    # 7. Append turtlebot3_gazebo models to Gazebo search path
-    #    (allows Gazebo to find robot models and plugins)
-    set_env_vars_resources = AppendEnvironmentVariable(
+    # 7. Append models to Gazebo search path
+    #    Order matters: put workspace models first so local overrides are used.
+    set_env_vars_project_models_source = AppendEnvironmentVariable(
+        'GZ_SIM_RESOURCE_PATH',
+        source_models_path
+    )
+    set_env_vars_project_models_installed = AppendEnvironmentVariable(
+        'GZ_SIM_RESOURCE_PATH',
+        installed_models_path
+    )
+    set_env_vars_turtlebot_models = AppendEnvironmentVariable(
         'GZ_SIM_RESOURCE_PATH',
         os.path.join(turtlebot3_gazebo_dir, 'models')
     )
@@ -165,20 +318,43 @@ def generate_launch_description():
         description='Path to the Gazebo world SDF (turtle.sdf)'
     ))
     ld.add_action(DeclareLaunchArgument(
+        'world_template', default_value='',
+        description='Template world SDF used to generate a launch-time world. If empty, uses the "world" argument.'
+    ))
+    ld.add_action(DeclareLaunchArgument(
+        'human_poses_csv', default_value=_default_human_poses_csv_path(),
+        description='CSV file with columns name,x,y,yaw. If set, generates a temporary world with updated human poses.'
+    ))
+    ld.add_action(DeclareLaunchArgument(
+        'generated_world_out', default_value='',
+        description='Optional output path for the generated world SDF. If empty, uses /tmp/turtle_generated.sdf.'
+    ))
+    ld.add_action(DeclareLaunchArgument(
+        'cache_generated_world', default_value='false',
+        description='If true and generated_world_out exists and is newer than CSV/template, reuse it instead of regenerating.'
+    ))
+    ld.add_action(DeclareLaunchArgument(
         'use_sim_time', default_value='true',
         description='Use simulation (Gazebo) clock'
     ))
     ld.add_action(DeclareLaunchArgument(
-        'x_pose', default_value='-2.0',
+        'x_pose', default_value='1.6',
         description='Initial X position of robot'
     ))
     ld.add_action(DeclareLaunchArgument(
         'y_pose', default_value='-0.5',
         description='Initial Y position of robot'
     ))
+    ld.add_action(DeclareLaunchArgument(
+        'yaw_pose', default_value='0.0',
+        description='Initial yaw (radians) of robot'
+    ))
 
     # Add actions in dependency order
-    ld.add_action(set_env_vars_resources)  # Set paths first
+    ld.add_action(set_env_vars_project_models_source)  # Set paths first
+    ld.add_action(set_env_vars_project_models_installed)
+    ld.add_action(set_env_vars_turtlebot_models)
+    ld.add_action(OpaqueFunction(function=_apply_human_poses_from_csv))
     ld.add_action(gazebo_cmd)               # Start Gazebo (server + GUI)
     ld.add_action(robot_state_publisher_cmd)  # Publish TF
     ld.add_action(spawn_turtlebot_cmd)      # Spawn robot model
