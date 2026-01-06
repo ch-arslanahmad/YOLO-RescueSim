@@ -77,6 +77,17 @@ With ROS sourced + workspace overlay + venv:
   - `/yolo/detections` (JSON in `std_msgs/String`)
   - `/yolo/detection_image` (annotated image)
 
+## View detections in the camera feed
+
+If you want to see bounding boxes in a camera viewer, view the annotated topic:
+
+- Raw camera (no boxes): `/camera/image_raw`
+- YOLO annotated camera (boxes): `/yolo/detection_image`
+
+Example (lightweight viewer):
+
+- `ros2 run image_view image_view --ros-args -r image:=/yolo/detection_image`
+
 ## Common issues
 
 - YOLO node starts but no detections:

@@ -140,6 +140,15 @@ ros2 run rqt_image_view rqt_image_view
 ```
 	Then select `/camera/image_raw` in the GUI.
 
+- **Visualize YOLO detections on the camera feed (bounding boxes):**
+  - Raw camera is `/camera/image_raw` (no boxes)
+  - Annotated detections are published on `/yolo/detection_image`
+
+```bash
+ros2 run image_view image_view --ros-args -r image:=/yolo/detection_image
+```
+	Or in `rqt_image_view`, select `/yolo/detection_image`.
+
 - **Echo camera messages (raw data):**
 ```bash
 ros2 topic echo /camera/image_raw
