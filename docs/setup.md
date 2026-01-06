@@ -1,138 +1,100 @@
-# Installation Guide
+# Setup
 
-This includes guide to install relevent packages:
+This doc is the canonical setup guide for YOLO-RescueSim on Ubuntu + ROS 2 Jazzy + Gazebo Harmonic.
 
-## Gazebo 
+## Prerequisites
 
-## Step 1 - Add the Gazebo OSRF Package Repository
+- Ubuntu 22.04/24.04
+- ROS 2 Jazzy
+- Gazebo Harmonic (`gz-harmonic`)
+
+## Install ROS 2 Jazzy
+
+Add the ROS apt repository:
+
 ```bash
-sudo apt-get update
-sudo apt-get install curl lsb-release gnupg
-sudo curl https://packages.osrfoundation.org/gazebo.gpg \
-  --output /usr/share/keyrings/pkgs-osrf-archive-keyring.gpg
-  
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/pkgs-osrf-archive-keyring.gpg] \
-  https://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" \
+sudo apt update
+sudo apt install -y curl gnupg lsb-release
+sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc -o /usr/share/keyrings/ros-archive-keyring.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
+  | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
+
+sudo apt update
+```
+
+Install ROS:
+
+```bash
+sudo apt install -y ros-jazzy-desktop
+```
+
+## Install Gazebo Harmonic
+
+Add the Gazebo (OSRF) apt repository:
+
+```bash
+sudo apt update
+sudo apt install -y curl gnupg lsb-release
+sudo curl -sSL https://packages.osrfoundation.org/gazebo.gpg -o /usr/share/keyrings/gazebo-archive-keyring.gpg
+
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/gazebo-archive-keyring.gpg] https://packages.osrfoundation.org/gazebo/ubuntu-stable $(lsb_release -cs) main" \
   | sudo tee /etc/apt/sources.list.d/gazebo-stable.list > /dev/null
 
-sudo apt-get update
-
-
+sudo apt update
 ```
 
-### Step 2 - Install Gazebo
+Install Gazebo Harmonic:
 
 ```bash
-sudo apt-get install gz-harmonic
+sudo apt install -y gz-harmonic
 ```
 
-### Step 3 - Verify Installation
+Quick sanity check:
 
-Run Gazebo: 
 ```bash
 gz sim
 ```
 
-## ROS
+## Install TurtleBot3 + ROS/Gazebo bridge packages
 
-The latest version is ROS2.
-
-### Step 1 - Add the ROS2 Repo
-```bash
-
-sudo apt update && sudo apt install curl gnupg lsb-release
-sudo curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc -o /usr/share/keyrings/ros-archive-keyring.gpg
-
-echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] \
-  http://packages.ros.org/ros2/ubuntu $(lsb_release -cs) main" \
-  | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null
-
-```
-
-### Step 2 - Install ROS2
-
-
-The installation of ROS is [here.](ros.md)
-
-#### Step 3 - Create `launch.py` file
-
-```python
-
-
-```
-
-#### Step 4 - Run the Launch File
-
-Install colcon,
+Install the core simulation packages used by this repo:
 
 ```bash
 sudo apt update
-sudo apt install python3-colcon-common-extensions -y
+sudo apt install -y \
+  ros-jazzy-turtlebot3 \
+  ros-jazzy-turtlebot3-simulations \
+  ros-jazzy-ros-gz-sim \
+  ros-jazzy-ros-gz-bridge \
+  ros-jazzy-ros-gz-image
+```
 
-```
-```
-```
-
-
-```
-Now building Workspace
+Optional viewer:
 
 ```bash
-
-cd ~/turtlebot4_ws
-colcon build
+sudo apt install -y ros-jazzy-image-view
 ```
 
-Now source the workspace (`launch.py` file)
+## Build this repo
+
+From the repo root:
 
 ```bash
-source install/setup.bash
-
-
-```
-
-Now creating a ROS package inside  the workspace:
-```bash
-cd ~/turtlebot4_ws/src
-ros2 pkg create --build-type ament_python my_turtlebot4_pkg
-
-```
-
-```
-
-Now, the package turtlebot4_custom is now created:
-
-```bash
-
-mkdir ~/turtlebot4_ws/src/turtlebot4_custom/launch #create launch directory
-
-mv ~/turtlebot4_ws/src/turtlebot4_custom/launch/launch.py \
-   ~/turtlebot4_ws/src/turtlebot4_custom/launch/turtlebot4_sim.launch.py
-# renaming for clarity
-
-# Now building Workspace again,
-
-```bash
-cd ~/turtlebot4_ws
-colcon build
+source /opt/ros/jazzy/setup.bash
+./build_project.sh
 source install/setup.bash
 ```
 
+## Run the simulation
 
-#### Flowchart
-
-```mermaid
-graph TD
-    A["Gazebo Harmonic (gz sim)"]
-    B["gz_ros2_control (Gazebo plugin)"]
-    C["ros2_control (ROS framework)"]
-    D["Nav2"]
-    E["YOLO"]
-    
-    A --> B
-    B --> C
-    C --> D
-    D --> E
+```bash
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+./launch_sim.sh
 ```
 
-Now Learn Basics of Gazebo and ROS2 from basics.md
+## Next
+
+- YOLO Python env setup: see [yolo.md](yolo.md)
+- Common commands: see [commands.md](commands.md)

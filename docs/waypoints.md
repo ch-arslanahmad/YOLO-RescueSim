@@ -1,16 +1,22 @@
-# Waypoint Recorder Guide (Teleop + Manual Pose Entry)
+# Waypoints
 
-This project currently records waypoints by prompting you to type the robot pose you read from the Gazebo UI.
-That sounds manual, but it is the most reliable approach right now because the simulation is not providing a usable ROS pose stream (like `/odom` or TF).
+This repo uses waypoint CSV files for repeatable navigation demos.
 
-## What you can do with this
+There are two approaches:
+
+1) Manual waypoint recording (reads pose from the Gazebo UI)
+2) Playback of a waypoint CSV (open-loop, via timed `/cmd_vel`)
+
+When `/odom` is available and reliable, the odom-based navigator can be used too.
+
+## What you can do
 
 - Drive the robot using keyboard teleop.
 - Record multiple waypoints in sequence: move → record → move → record.
-- Export a CSV in the exact format used by the waypoint navigator.
+- Export a CSV in the exact format used by the waypoint tools.
 - Use Demo mode to quickly collect several waypoints with guided prompts.
 
-## Start (two terminals)
+## Record waypoints (two terminals)
 
 Terminal 1 (simulation):
 
@@ -111,7 +117,7 @@ Waypoint_ID,X_Position,Y_Position,Theta_Radians
 
 On export (`e`), the script prints the full path to the CSV. Use `l` later to print it again.
 
-## Auto-move using your recorded waypoints
+## Playback using your recorded waypoints
 
 There are two navigation scripts:
 
@@ -125,9 +131,19 @@ There are two navigation scripts:
 cd /home/arslan/Desktop/github/YOLO-RescueSim
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
-python3 -c "from navigation_scripts.navigation.open_loop_waypoint_player import main; main()"
+ros2 run project play_waypoints
 ```
 
 It will ask for your exported CSV path (use `l` in the recorder to print it), then it will drive waypoint-to-waypoint using timed `/cmd_vel` commands.
 
 **Important:** open-loop playback assumes the robot starts at waypoint 1 (no localization), so place the robot at waypoint 1 in Gazebo before you press ENTER to start.
+
+## CSV format
+
+The manual recorder exports:
+
+```csv
+Waypoint_ID,X_Position,Y_Position,Theta_Radians
+1,0.5234,1.2567,0.4560
+2,1.2345,2.3456,0.7890
+```

@@ -15,9 +15,17 @@ Or more extensively, rescue markers (like colored flags).
 
 A mobile robot equipped with a camera that identifies humans and rescue markers (such as colored flags) in a given environment by analyzing captured images, using a lightweight YOLO detection model within ROS and Gazebo
 
-For more info, go to [implementation](implementation.md).
-
 Project milestones and changes over time are tracked in [docs/implementation.md](docs/implementation.md).
+
+## Docs
+
+- Setup: [docs/setup.md](docs/setup.md)
+- Launch guide: [docs/launch.md](docs/launch.md)
+- YOLO setup: [docs/yolo.md](docs/yolo.md)
+- Commands reference: [docs/commands.md](docs/commands.md)
+- Navigation: [docs/navigation.md](docs/navigation.md)
+- Waypoints: [docs/waypoints.md](docs/waypoints.md)
+- Custom models: [docs/models.md](docs/models.md)
 
 ## Prerequisites
 

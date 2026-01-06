@@ -53,7 +53,7 @@ You can save you file in Gazebo by going to:
 - File -> Save World As... (make sure the file extension is `.sdf`)
 
 > [!IMPORTANT]
-> There are far more commands in gazebo that may be used alongside Plugins, ROS etc, which is covered [here](commands.md).
+> There are far more commands in Gazebo that may be used alongside plugins/ROS, which is covered in [commands.md](commands.md).
 
 
 

@@ -1,18 +1,26 @@
-# Navigation Scripts for TurtleBot3 - Scripted Path Approach
+# Navigation
 
-This guide covers the **3-terminal workflow** for calibrating waypoints and navigating the TurtleBot3 through a known environment using **scripted paths** instead of autonomous navigation.
+This repo supports a scripted-path workflow for TurtleBot3:
 
-## Overview
+- Drive manually and record waypoints (CSV)
+- Replay the path (open-loop) or navigate via `/odom` (when available)
 
-The system uses a **3-terminal workflow**:
+## Build + environment
+
+```bash
+cd /home/arslan/Desktop/github/YOLO-RescueSim
+source /opt/ros/jazzy/setup.bash
+./build_project.sh
+source install/setup.bash
+```
+
+## Workflow (3 terminals)
 
 ```
-Terminal 1: Launch Gazebo with TurtleBot3 (simulation)
-Terminal 2: Keyboard Controller (manual robot control)
-Terminal 3: Coordinate Tracker (monitor & record waypoints)
+Terminal 1: Simulation
+Terminal 2: Manual control
+Terminal 3: Waypoint recording
 ```
-
-Once waypoints are calibrated, use **Terminal 4** to execute the path.
 
 ---
 
@@ -37,7 +45,7 @@ project/
 ### Terminal 1: Launch Gazebo
 
 ```bash
-ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
+./launch_sim.sh
 ```
 
 This launches:
@@ -52,9 +60,9 @@ This launches:
 ### Terminal 2: Keyboard Controller
 
 ```bash
-cd ~/Desktop/github/YOLO-RescueSim
+cd /home/arslan/Desktop/github/YOLO-RescueSim
 source install/setup.bash
-ros2 run project keyboard_controller.py
+ros2 run project keyboard_controller
 ```
 
 **Controls:**
@@ -80,9 +88,9 @@ ros2 run project keyboard_controller.py
 ### Terminal 3: Coordinate Tracker
 
 ```bash
-cd ~/Desktop/github/YOLO-RescueSim
+cd /home/arslan/Desktop/github/YOLO-RescueSim
 source install/setup.bash
-ros2 run project coordinate_tracker.py
+ros2 run project coordinate_tracker
 ```
 
 **Live Display:**
@@ -126,12 +134,12 @@ After collecting waypoints, use the Navigator to execute the path.
 ### Terminal 4: Waypoint Navigator
 
 ```bash
-cd ~/Desktop/github/YOLO-RescueSim
+cd /home/arslan/Desktop/github/YOLO-RescueSim
 source install/setup.bash
-ros2 run project waypoint_navigator.py
+ros2 run project waypoint_navigator
 ```
 
-If the robot does not move, verify you launched the simulation using the project's Gazebo bridge (it must bridge `/cmd_vel`).
+If the robot does not move, verify the simulation is publishing and bridging `/cmd_vel` correctly.
 
 **Commands:**
 
@@ -175,14 +183,14 @@ If the robot does not move, verify you launched the simulation using the project
 
 ```bash
 # Terminal 1
-ros2 launch turtlebot3_gazebo turtlebot3_world.launch.py
+./launch_sim.sh
 
 # Terminal 2
-ros2 run project keyboard_controller.py
+ros2 run project keyboard_controller
 # Output: "Keyboard Controller Initialized"
 
 # Terminal 3
-ros2 run project coordinate_tracker.py
+ros2 run project coordinate_tracker
 # Output: "[LIVE] X: 0.000m | Y: 0.000m | Θ: 0.000rad"
 
 # Now in Terminal 2, drive the robot around
@@ -203,7 +211,7 @@ E  # Export to a named file
 # Terminal 2 (close previous, not needed)
 
 # Terminal 4 (new)
-ros2 run project waypoint_navigator.py
+ros2 run project waypoint_navigator
 
 # Commands:
 L
@@ -239,7 +247,7 @@ You can:
 
 ---
 
-## Coordinate System Explained
+## Coordinate System
 
 **TurtleBot3 Default World** uses standard ROS conventions:
 

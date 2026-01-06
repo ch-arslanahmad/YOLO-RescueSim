@@ -1,27 +1,32 @@
-# YOLO-RescueSim: Custom ROS 2 Launch Guide
+# Launch
 
 ## Quick Start
 
 ```bash
-cd /home/arslan/Desktop/github/YOLO-RescueSim/project
+cd /home/arslan/Desktop/github/YOLO-RescueSim
 
-# Set the robot model
 export TURTLEBOT3_MODEL=burger
 
-# Run the custom launch file
-ros2 launch launch/rescue_sim.launch.py
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+
+# Option A (recommended): use the helper launcher
+./launch_sim.sh
+
+# Option B: run the ROS launch file directly
+ros2 launch project rescue_sim.launch.py
 ```
 
 ---
 
-## What the Launch File Does
+## What the Launch Does
 
-The `rescue_sim.launch.py` is a **custom ROS 2 launch configuration** that:
+The `rescue_sim.launch.py` launch file:
 
-1. **Launches Gazebo** with the **Gazebo Harmonic simulator** (`gz sim`)
-2. **Loads your custom `world.sdf`** into the simulation
-3. **Spawns TurtleBot3 (burger)** into the world
-4. **Maintains ROS 2 integration** for all sensors and controls:
+1. Launches Gazebo Harmonic (`gz sim`) through ROS 2
+2. Loads the repo world file (`project/turtle.sdf`)
+3. Spawns TurtleBot3 (burger) into the world
+4. Bridges key topics so ROS 2 nodes can interact with the sim:
    - `/cmd_vel` → robot movement commands
    - `/camera/image_raw` → camera stream (for YOLO)
    - `/scan` → LiDAR data
@@ -33,11 +38,10 @@ The `rescue_sim.launch.py` is a **custom ROS 2 launch configuration** that:
 
 ```
 project/
-├── world.sdf                      # Your custom Gazebo world
-├── turtle.sdf                     # TurtleBot3 model reference
+├── turtle.sdf                     # Gazebo world used by the sim
 ├── launch/
-│   └── rescue_sim.launch.py       # Main ROS 2 launch file
-└── LAUNCH_GUIDE.md                # This file
+│   ├── rescue_sim.launch.py       # Gazebo + TurtleBot3 + bridges
+│   └── rescue_detection.launch.py # YOLO + tracking pipeline
 ```
 
 ---
