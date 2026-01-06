@@ -131,6 +131,8 @@ source install/setup.bash
 ros2 run project waypoint_navigator.py
 ```
 
+If the robot does not move, verify you launched the simulation using the project's Gazebo bridge (it must bridge `/cmd_vel`).
+
 **Commands:**
 
 | Command | Action |

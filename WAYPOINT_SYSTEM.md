@@ -132,7 +132,7 @@ Extensible - Easy to add SLAM, object detection, etc.
 
 ---
 
-## 🎯 Current Status
+## Current Status
 
 | Component | Status |
 |-----------|--------|
@@ -146,7 +146,7 @@ Extensible - Easy to add SLAM, object detection, etc.
 
 ---
 
-## 📞 Usage Summary
+## Usage Summary
 
 **Record waypoints:**
 ```bash

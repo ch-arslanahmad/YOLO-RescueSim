@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 3.8)
 project(project)
 
+# Avoid CMake dev warning from ament_cmake_symlink_install about FILE(GLOB_RECURSE)
+# following symlinks (CMP0009). This is safe and keeps builds clean.
+if(POLICY CMP0009)
+  cmake_policy(SET CMP0009 NEW)
+endif()
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
@@ -35,6 +41,13 @@ install(PROGRAMS
   project/human_tracker.py
   DESTINATION lib/${PROJECT_NAME}
   RENAME human_tracker
+)
+
+# Install scripted path playback helper
+install(PROGRAMS
+  navigation_scripts/navigation/open_loop_waypoint_player.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME play_waypoints
 )
 
 # Install navigation scripts as packages

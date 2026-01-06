@@ -96,31 +96,31 @@ IncludeLaunchDescription(
 
 ## Troubleshooting
 
-### ❌ `ModuleNotFoundError: No module named 'ament_index_python'`
+### `ModuleNotFoundError: No module named 'ament_index_python'`
 **Solution**: Source ROS 2 setup
 ```bash
 source /opt/ros/jazzy/setup.bash
 ```
 
-### ❌ `Cannot find world.sdf`
+### `Cannot find world.sdf`
 **Solution**: Ensure path is absolute
 ```bash
 ros2 launch launch/rescue_sim.launch.py world:=/home/arslan/Desktop/github/YOLO-RescueSim/project/world.sdf
 ```
 
-### ❌ Robot doesn't appear in Gazebo
+### Robot doesn't appear in Gazebo
 **Solution**: Check `TURTLEBOT3_MODEL` is set
 ```bash
 echo $TURTLEBOT3_MODEL  # Should print "burger"
 ```
 
-### ❌ `/camera/image_raw` topic doesn't exist
+### `/camera/image_raw` topic doesn't exist
 **Solution**: Verify camera plugin is in `world.sdf`
 ```bash
 ros2 topic list | grep camera
 ```
 
-### ❌ ROS bridge fails to connect
+### ROS bridge fails to connect
 **Solution**: Gazebo might not be running. Check logs:
 ```bash
 # In separate terminal, watch Gazebo output
@@ -207,12 +207,12 @@ source ~/.bashrc
 
 ## What's Next?
 
-1. ✅ **Launch file working** → Test it runs without errors
-2. 📹 **Camera integration** → Subscribe to `/camera/image_raw` 
-3. 🤖 **YOLO detection node** → Run inference on camera frames
-4. 🎯 **Marker detection** → Parse YOLO outputs for rescue markers
-5. 🚀 **Navigation stack** → Add autonomous movement logic
-6. 🤖 **Real robot transition** → Deploy to physical TurtleBot3
+1. **Launch file working** → Test it runs without errors
+2. **Camera integration** → Subscribe to `/camera/image_raw`
+3. **YOLO detection node** → Run inference on camera frames
+4. **Marker detection** → Parse YOLO outputs for rescue markers
+5. **Navigation stack** → Add autonomous movement logic
+6. **Real robot transition** → Deploy to physical TurtleBot3
 
 ---
 

@@ -17,6 +17,8 @@ A mobile robot equipped with a camera that identifies humans and rescue markers 
 
 For more info, go to [implementation](implementation.md).
 
+Project milestones and changes over time are tracked in [docs/implementation.md](docs/implementation.md).
+
 ## Prerequisites
 
 You need:

@@ -110,7 +110,7 @@ class KeyboardController(Node):
                     
                     elif first_char == ' ':
                         self.send_command()
-                        self.get_logger().info("⛔ EMERGENCY STOP")
+                        self.get_logger().info("EMERGENCY STOP")
                     
                     elif first_char == '+' or first_char == '=':
                         self.linear_speed = min(0.5, self.linear_speed + 0.05)

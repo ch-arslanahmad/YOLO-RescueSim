@@ -230,16 +230,18 @@ class WaypointRecorder(Node):
                 current_time = time.time()
                 if current_time - status_update_time > 0.5:
                     status_update_time = current_time
-                    mode_indicator = "🔴 REC" if self.is_recording else "⚪"
+                    mode_indicator = "REC" if self.is_recording else "IDLE"
                     movement_indicator = ""
                     if self.is_moving_forward:
-                        movement_indicator = " ↑"
+                        movement_indicator = " ^"
                     elif self.is_turning_left:
-                        movement_indicator = " ←"
+                        movement_indicator = " <"
                     elif self.is_turning_right:
-                        movement_indicator = " →"
+                        movement_indicator = " >"
                     
-                    sys.stdout.write(f"\r📍 X={self.current_x:7.3f} Y={self.current_y:7.3f} θ={self.current_theta:6.3f} | {mode_indicator}{movement_indicator}   ")
+                    sys.stdout.write(
+                        f"\rX={self.current_x:7.3f} Y={self.current_y:7.3f} theta={self.current_theta:6.3f} | {mode_indicator}{movement_indicator}   "
+                    )
                     sys.stdout.flush()
                 
                 rclpy.spin_once(self, timeout_sec=0.01)
@@ -284,7 +286,7 @@ class WaypointRecorder(Node):
             self.record_waypoint()
         elif key == 'R':
             self.is_recording = not self.is_recording
-            status = "🔴 ON" if self.is_recording else "⚪ OFF"
+            status = "ON" if self.is_recording else "OFF"
             print(f"\nRecording mode: {status}")
         elif key == 'P':
             print("\n")
