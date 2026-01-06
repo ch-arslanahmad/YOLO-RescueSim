@@ -267,7 +267,7 @@ class ManualWaypointRecorder(Node):
     def print_last_export_path(self):
         """Print the most recently exported CSV path."""
         if not self.last_export_path:
-            print("\nℹ️  No CSV exported yet. Use 'e' to export first.\n")
+            print("\nINFO: No CSV exported yet. Use 'e' to export first.\n")
             return
         print(f"\nLast exported CSV: {self.last_export_path}\n")
     
