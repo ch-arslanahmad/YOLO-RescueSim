@@ -32,6 +32,8 @@ from launch_ros.actions import Node
 def _default_human_poses_csv_path() -> str:
     # Keep this relative so it works when the launch file is executed from the
     # installed location, but the user is running from the repo root.
+    # NOTE: This is kept for backward compatibility, but the launch argument
+    # default is intentionally empty so the world generation is opt-in.
     return os.path.join('waypoints', 'human_poses.csv')
 
 
@@ -92,21 +94,47 @@ def _apply_human_poses_from_csv(context, *args, **kwargs):
     if world is None:
         raise RuntimeError('No <world> element found in template SDF')
 
-    # Build map of existing models by name
+    # Build maps of existing entities by name.
+    # Newer templates in this repo use world-level <include> with <name>.
+    includes_by_name = {}
+    for include in world.findall('include'):
+        name_el = include.find('name')
+        if name_el is not None and (name_el.text or '').strip():
+            includes_by_name[name_el.text.strip()] = include
+
     models_by_name = {}
     for model in world.findall('model'):
         model_name = model.get('name')
         if model_name:
             models_by_name[model_name] = model
 
-    prototype = models_by_name.get('human_1')
+    prototype_include = includes_by_name.get('human_1')
+    prototype_model = models_by_name.get('human_1')
 
-    def ensure_human_model(name: str):
-        existing = models_by_name.get(name)
-        if existing is not None:
-            return existing
-        if prototype is not None:
-            new_model = deepcopy(prototype)
+    def ensure_human_entity(name: str):
+        existing_include = includes_by_name.get(name)
+        if existing_include is not None:
+            return existing_include
+        existing_model = models_by_name.get(name)
+        if existing_model is not None:
+            return existing_model
+
+        if prototype_include is not None:
+            new_include = deepcopy(prototype_include)
+            name_el = new_include.find('name')
+            if name_el is None:
+                name_el = ET.SubElement(new_include, 'name')
+            name_el.text = name
+            pose_el = new_include.find('pose')
+            if pose_el is None:
+                pose_el = ET.SubElement(new_include, 'pose')
+            pose_el.text = '0 0 0 0 0 0'
+            world.append(new_include)
+            includes_by_name[name] = new_include
+            return new_include
+
+        if prototype_model is not None:
+            new_model = deepcopy(prototype_model)
             new_model.set('name', name)
             pose_el = new_model.find('pose')
             if pose_el is None:
@@ -116,19 +144,19 @@ def _apply_human_poses_from_csv(context, *args, **kwargs):
             models_by_name[name] = new_model
             return new_model
 
-        # Fallback: create a minimal human model that includes the local walking person
-        new_model = ET.Element('model', attrib={'name': name})
-        static_el = ET.SubElement(new_model, 'static')
-        static_el.text = 'true'
-        pose_el = ET.SubElement(new_model, 'pose')
-        pose_el.text = '0 0 0 0 0 0'
-        include_el = ET.SubElement(new_model, 'include')
-        include_el.set('merge', 'true')
-        uri_el = ET.SubElement(include_el, 'uri')
+        # Fallback: create a minimal world-level include for the local walking person
+        new_include = ET.Element('include')
+        uri_el = ET.SubElement(new_include, 'uri')
         uri_el.text = 'model://walking_person_small'
-        world.append(new_model)
-        models_by_name[name] = new_model
-        return new_model
+        name_el = ET.SubElement(new_include, 'name')
+        name_el.text = name
+        pose_el = ET.SubElement(new_include, 'pose')
+        pose_el.text = '0 0 0 0 0 0'
+        static_el = ET.SubElement(new_include, 'static')
+        static_el.text = 'true'
+        world.append(new_include)
+        includes_by_name[name] = new_include
+        return new_include
 
     with open(csv_path, 'r', newline='') as f:
         reader = csv.DictReader(
@@ -148,7 +176,7 @@ def _apply_human_poses_from_csv(context, *args, **kwargs):
             if not x or not y or not yaw:
                 raise RuntimeError(f'Invalid row for {name}: expected columns name,x,y,yaw')
 
-            target = ensure_human_model(name)
+            target = ensure_human_entity(name)
             pose_el = target.find('pose')
             if pose_el is None:
                 pose_el = ET.SubElement(target, 'pose')
@@ -178,26 +206,38 @@ def generate_launch_description():
     ros_gz_sim_dir = get_package_share_directory('ros_gz_sim')
     project_dir = get_package_share_directory('project')
 
-    # Local models directory (source tree) and installed models directory
+    # Local models directory (repo working tree) and installed models directory.
+    # When users run `ros2 launch ...` from the repo root, prefer `./project/models`
+    # so the sim works without rebuilding and can run offline.
+    cwd_models_path = str((Path.cwd() / 'project' / 'models').resolve())
     source_models_path = str((Path(__file__).resolve().parents[1] / 'models'))
     installed_models_path = os.path.join(project_dir, 'models')
 
     # World file
-    # Prefer the source-tree turtle.sdf when running from the workspace.
+    # Prefer the repo working tree `./project/turtle.sdf` when available.
     # This makes it easier to iterate on the world without rebuilding.
     installed_world_sdf_path = os.path.join(project_dir, 'turtle.sdf')
     source_world_sdf_path = str((Path(__file__).resolve().parents[1] / 'turtle.sdf'))
-    default_world_sdf_path = source_world_sdf_path if os.path.exists(source_world_sdf_path) else installed_world_sdf_path
+    cwd_world_sdf_path = str((Path.cwd() / 'project' / 'turtle.sdf').resolve())
+
+    if os.path.exists(cwd_world_sdf_path):
+        default_world_sdf_path = cwd_world_sdf_path
+    elif os.path.exists(source_world_sdf_path):
+        default_world_sdf_path = source_world_sdf_path
+    else:
+        default_world_sdf_path = installed_world_sdf_path
     
     # Launch configuration variables with defaults
     use_sim_time = LaunchConfiguration('use_sim_time', default='true')
     world_sdf_path = LaunchConfiguration('world', default=default_world_sdf_path)
     world_template_path = LaunchConfiguration('world_template', default='')
-    human_poses_csv_path = LaunchConfiguration('human_poses_csv', default=_default_human_poses_csv_path())
+    human_poses_csv_path = LaunchConfiguration('human_poses_csv', default='')
     generated_world_out = LaunchConfiguration('generated_world_out', default='')
     cache_generated_world = LaunchConfiguration('cache_generated_world', default='false')
-    x_pose = LaunchConfiguration('x_pose', default='1.6')
-    y_pose = LaunchConfiguration('y_pose', default='-0.5')
+    # Default spawn pose aligned with the first waypoint in waypoints/waypoints_arslan_recorded_2026-01-04.csv
+    # (x=-2.0001, y=-0.5000, yaw=0.0)
+    x_pose = LaunchConfiguration('x_pose', default='-2.0001')
+    y_pose = LaunchConfiguration('y_pose', default='-0.5000')
     yaw_pose = LaunchConfiguration('yaw_pose', default='0.0')
 
     # ========== GAZEBO LAUNCH ACTIONS ==========
@@ -267,7 +307,9 @@ def generate_launch_description():
     )
 
     # 5. Bridge ROS 2 topics to Gazebo topics via ros_gz_bridge
-    #    Maps ROS topics to Gazebo topics (cmd_vel, odom, scan, etc)
+    # Direction symbol:
+    #   ] == ROS -> Gazebo
+    #   [ == Gazebo -> ROS
     bridge_cmd = Node(
         package='ros_gz_bridge',
         executable='parameter_bridge',
@@ -283,11 +325,12 @@ def generate_launch_description():
     )
 
     # 6. Bridge camera image topics (separate from generic bridge)
-    #    Converts gz::/camera/image_raw to ROS 2 /camera/image_raw
+    # Gazebo Transport image topic for TurtleBot3 camera.
+    gz_camera_image = '/camera/image_raw'
     image_bridge_cmd = Node(
         package='ros_gz_image',
         executable='image_bridge',
-        arguments=['/camera/image_raw'],
+        arguments=[gz_camera_image],
         output='screen',
     )
 
@@ -295,6 +338,10 @@ def generate_launch_description():
     
     # 7. Append models to Gazebo search path
     #    Order matters: put workspace models first so local overrides are used.
+    set_env_vars_project_models_cwd = AppendEnvironmentVariable(
+        'GZ_SIM_RESOURCE_PATH',
+        cwd_models_path
+    )
     set_env_vars_project_models_source = AppendEnvironmentVariable(
         'GZ_SIM_RESOURCE_PATH',
         source_models_path
@@ -322,7 +369,7 @@ def generate_launch_description():
         description='Template world SDF used to generate a launch-time world. If empty, uses the "world" argument.'
     ))
     ld.add_action(DeclareLaunchArgument(
-        'human_poses_csv', default_value=_default_human_poses_csv_path(),
+        'human_poses_csv', default_value='',
         description='CSV file with columns name,x,y,yaw. If set, generates a temporary world with updated human poses.'
     ))
     ld.add_action(DeclareLaunchArgument(
@@ -338,11 +385,11 @@ def generate_launch_description():
         description='Use simulation (Gazebo) clock'
     ))
     ld.add_action(DeclareLaunchArgument(
-        'x_pose', default_value='1.6',
+        'x_pose', default_value='-2.0001',
         description='Initial X position of robot'
     ))
     ld.add_action(DeclareLaunchArgument(
-        'y_pose', default_value='-0.5',
+        'y_pose', default_value='-0.5000',
         description='Initial Y position of robot'
     ))
     ld.add_action(DeclareLaunchArgument(
@@ -351,7 +398,10 @@ def generate_launch_description():
     ))
 
     # Add actions in dependency order
-    ld.add_action(set_env_vars_project_models_source)  # Set paths first
+    # Set paths first (workspace models before installed ones)
+    if os.path.isdir(cwd_models_path):
+        ld.add_action(set_env_vars_project_models_cwd)
+    ld.add_action(set_env_vars_project_models_source)
     ld.add_action(set_env_vars_project_models_installed)
     ld.add_action(set_env_vars_turtlebot_models)
     ld.add_action(OpaqueFunction(function=_apply_human_poses_from_csv))

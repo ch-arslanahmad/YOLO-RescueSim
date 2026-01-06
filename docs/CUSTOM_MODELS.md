@@ -19,6 +19,15 @@ These are not YOLO dependencies; they are simulation / model-loading dependencie
 
 ## Model sources: Fuel vs local
 
+## Offline-friendly defaults in this repo
+
+This repo is set up to run without internet access:
+
+- The world uses `model://ground_plane` (local model in `project/models/ground_plane`) instead of a Fuel URL.
+- Humans use `model://walking_person_small` (local copy) so scaling is reliable and no downloads are needed.
+
+If you add a model via a `https://fuel.gazebosim.org/...` URI, Gazebo may try to download it the first time.
+
 ### Option A: Use Fuel (online)
 In a world file you can reference Fuel URLs:
 

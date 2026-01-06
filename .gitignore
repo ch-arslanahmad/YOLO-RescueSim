@@ -3,6 +3,11 @@ build/
 install/
 log/
 
+# Some users end up building from inside the ROS package folder too
+project/build/
+project/install/
+project/log/
+
 # ROS/Colcon build artifacts
 *.so
 *.o
@@ -40,6 +45,9 @@ ENV/
 
 # Generated world exports
 project/turtle_from_csv.sdf
+
+# Runtime exports
+project/human_detections/
 
 # ML model weights / large binaries
 *.pt
