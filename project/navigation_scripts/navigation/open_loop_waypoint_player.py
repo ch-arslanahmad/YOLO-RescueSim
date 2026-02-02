@@ -213,11 +213,13 @@ def _find_all_csvs() -> list[str]:
         if not pattern:
             continue
         for path in glob.glob(pattern):
-            if path not in seen:
+            # Resolve to absolute path to avoid duplicates
+            abs_path = os.path.abspath(path)
+            if abs_path not in seen:
                 # Skip empty CSVs (header only, no data rows)
-                if _has_csv_data(path):
-                    all_csvs.append(path)
-                    seen.add(path)
+                if _has_csv_data(abs_path):
+                    all_csvs.append(abs_path)
+                    seen.add(abs_path)
 
     if all_csvs:
         all_csvs.sort(key=lambda f: os.path.getmtime(f), reverse=True)
