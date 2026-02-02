@@ -5,7 +5,7 @@
 set -e
 
 PROJECT_DIR="/home/zubair/Downloads/YOLO-RescueSim"
-ARCHIVE_NAME="YOLO-RescueSim-clean.tar.gz"
+ARCHIVE_NAME="YOLO-RescueSim-clean.zip"
 DEST_DIR="/home/zubair/Downloads"
 
 echo "Creating clean archive of YOLO-RescueSim..."
@@ -14,20 +14,19 @@ echo "=========================================="
 cd "$PROJECT_DIR"
 
 # Create archive excluding heavy files
-tar -czf "$DEST_DIR/$ARCHIVE_NAME" \
-  --exclude='.venv' \
-  --exclude='build' \
-  --exclude='install' \
-  --exclude='log' \
-  --exclude='__pycache__' \
-  --exclude='*.pyc' \
-  --exclude='*.pyo' \
-  --exclude='.git' \
-  --exclude='*.bag' \
-  --exclude='*.db3' \
-  --exclude='*.mp4' \
-  --exclude='*.avi' \
-  .
+zip -r "$DEST_DIR/$ARCHIVE_NAME" . \
+  -x '.venv/*' \
+  -x 'build/*' \
+  -x 'install/*' \
+  -x 'log/*' \
+  -x '*__pycache__*' \
+  -x '*.pyc' \
+  -x '*.pyo' \
+  -x '.git/*' \
+  -x '*.bag' \
+  -x '*.db3' \
+  -x '*.mp4' \
+  -x '*.avi'
 
 ARCHIVE_SIZE=$(du -sh "$DEST_DIR/$ARCHIVE_NAME" | awk '{print $1}')
 

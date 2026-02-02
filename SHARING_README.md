@@ -14,7 +14,7 @@ This project is a ROS 2 + Gazebo autonomous rescue robot simulation with YOLO-ba
 
 1. **Extract the archive**
    ```bash
-   tar -xzf YOLO-RescueSim-clean.tar.gz
+   unzip YOLO-RescueSim-clean.zip
    cd YOLO-RescueSim
    ```
 
