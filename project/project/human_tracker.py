@@ -90,7 +90,11 @@ class HumanTracker(Node):
         self.camera_fov_v = 48  # vertical FOV in degrees
         
         # Output file
-        self.output_dir = Path('/home/arslan/Desktop/github/YOLO-RescueSim/project/human_detections')
+        # Use a relative path from home directory or current workspace
+        home_dir = Path.home()
+        self.output_dir = home_dir / 'yolo_rescue_detections'
+        # Alternatively, use /tmp for temporary storage:
+        # self.output_dir = Path('/tmp/yolo_rescue_detections')
         self.output_dir.mkdir(exist_ok=True)
         
         self.get_logger().info('Human Tracker Node Started')

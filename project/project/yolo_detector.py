@@ -96,7 +96,7 @@ class YOLODetector(Node):
         # Default is intentionally non-zero to avoid pegging CPU when run standalone.
         self.declare_parameter('max_inference_hz', 5.0)
         # Cap CPU usage from Torch/OpenCV thread pools.
-        self.declare_parameter('torch_num_threads', 2)
+        self.declare_parameter('torch_num_threads', 2)``
         self.declare_parameter('torch_num_interop_threads', 1)
         self.declare_parameter('opencv_num_threads', 1)
 
@@ -122,7 +122,9 @@ class YOLODetector(Node):
         else:
             try:
                 self.model = YOLO(model_path)
-                self.get_logger().info(f'YOLO model loaded: {model_path}')
+                # Force CPU to avoid CUDA compatibility issues
+                self.model.to('cpu')
+                self.get_logger().info(f'YOLO model loaded on CPU: {model_path}')
             except Exception as e:
                 self.get_logger().error(f'Failed to load YOLO model ({model_path}): {e}')
                 self.model = None
@@ -263,7 +265,7 @@ class YOLODetector(Node):
 
             if self.model is not None:
                 conf_threshold = float(self.get_parameter('conf_threshold').get_parameter_value().double_value)
-                results = self.model(cv_image, conf=conf_threshold, classes=[0])
+                results = self.model(cv_image, conf=conf_threshold, classes=[0], device='cpu')
 
                 for result in results:
                     if result.boxes is None:

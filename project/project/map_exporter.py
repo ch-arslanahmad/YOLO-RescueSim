@@ -12,7 +12,10 @@ import numpy as np
 
 
 class HumanMapExporter:
-    def __init__(self, output_dir='/home/arslan/Desktop/github/YOLO-RescueSim/project/human_detections'):
+    def __init__(self, output_dir=None):
+        if output_dir is None:
+            from pathlib import Path
+            output_dir = str(Path.home() / 'yolo_rescue_detections')
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(exist_ok=True)
     
