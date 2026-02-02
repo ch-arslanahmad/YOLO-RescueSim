@@ -81,8 +81,9 @@ fi
 source /opt/ros/jazzy/setup.bash
 echo -e "${GREEN}OK: ROS 2 Jazzy sourced${NC}"
 
-# Navigate to project directory
-cd /home/arslan/Desktop/github/YOLO-RescueSim
+# Navigate to project directory (use script's directory)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
 
 PROJECT_ROOT="$(pwd)"
 SOURCE_WORLD_SDF="$PROJECT_ROOT/project/turtle.sdf"
@@ -104,6 +105,18 @@ ensure_project_overlay() {
         # shellcheck disable=SC1091
         source install/setup.bash
         echo -e "${GREEN}OK: Project built and sourced${NC}"
+    fi
+}
+
+source_tb3_workspace() {
+    local tb3_ws="$HOME/turtlebot3_ws"
+    if [ -f "$tb3_ws/install/setup.bash" ]; then
+        # shellcheck disable=SC1091
+        source "$tb3_ws/install/setup.bash"
+        echo -e "${GREEN}OK: TurtleBot3 workspace sourced (${tb3_ws})${NC}"
+    else
+        echo -e "${YELLOW}WARN: TurtleBot3 workspace not found at ${tb3_ws}.${NC}"
+        echo -e "${YELLOW}      Build TB3 from source (already done earlier) if teleop fails.${NC}"
     fi
 }
 
@@ -139,6 +152,7 @@ ensure_gz_resource_path() {
     # actions are bypassed by a different entry path.
     prepend_unique_path GZ_SIM_RESOURCE_PATH "$PROJECT_ROOT/project/models"
     prepend_unique_path GZ_SIM_RESOURCE_PATH "$PROJECT_ROOT/install/project/share/project/models"
+    prepend_unique_path GZ_SIM_RESOURCE_PATH "$HOME/turtlebot3_ws/install/turtlebot3_gazebo/share/turtlebot3_gazebo/models"
     prepend_unique_path GZ_SIM_RESOURCE_PATH "/opt/ros/jazzy/share/turtlebot3_gazebo/models"
     echo -e "${GREEN}OK: GZ_SIM_RESOURCE_PATH configured${NC}"
 }
@@ -179,6 +193,35 @@ wait_for_topic_publisher() {
 set_tb3_model() {
     export TURTLEBOT3_MODEL=burger
     echo -e "${GREEN}OK: TurtleBot3 model set to: $TURTLEBOT3_MODEL${NC}\n"
+}
+
+check_gazebo_running() {
+    # Check if Gazebo (gz sim) is running
+    if pgrep -f "gz sim" > /dev/null 2>&1; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_ros_bridge_active() {
+    # Check if ROS bridge is active (more topics than just /parameter_events and /rosout)
+    local topic_count
+    topic_count=$(ros2 topic list 2>/dev/null | grep -v "^/parameter_events$\|^/rosout$" | wc -l)
+    if [ "$topic_count" -gt 0 ]; then
+        return 0
+    else
+        return 1
+    fi
+}
+
+check_cmd_vel_topic() {
+    # Check if /cmd_vel topic exists (robot is spawned)
+    if ros2 topic list 2>/dev/null | grep -q "^/cmd_vel$"; then
+        return 0
+    else
+        return 1
+    fi
 }
 
 print_menu() {
@@ -237,8 +280,48 @@ start_yolo_viewer() {
 }
 
 start_teleop_keyboard() {
+    # Check if Gazebo is running
+    if ! check_gazebo_running; then
+        echo -e "${RED}ERROR: Gazebo is not running!${NC}"
+        echo -e "${YELLOW}      Start the simulation first (option 1, 1b, or 1g).${NC}\n"
+        return 1
+    fi
+    
+    echo -e "${GREEN}OK: Gazebo detected${NC}"
+    
+    # Check if ROS bridge is active
+    if ! check_ros_bridge_active; then
+        echo -e "${RED}ERROR: ROS 2 bridge not active!${NC}"
+        echo -e "${YELLOW}      You have Gazebo open, but not launched via ROS 2.${NC}"
+        echo -e "${YELLOW}      Close Gazebo and use option 1 or 1b to launch properly.${NC}\n"
+        return 1
+    fi
+    
+    echo -e "${GREEN}OK: ROS 2 bridge active${NC}"
+    
+    # Check if robot is spawned (cmd_vel topic exists)
+    if ! check_cmd_vel_topic; then
+        echo -e "${YELLOW}WARN: /cmd_vel topic not found. Robot may not be spawned yet.${NC}"
+        echo -e "${YELLOW}      Waiting for robot to spawn...${NC}"
+        
+        for i in {1..6}; do
+            sleep 1
+            if check_cmd_vel_topic; then
+                break
+            fi
+        done
+        
+        if ! check_cmd_vel_topic; then
+            echo -e "${RED}ERROR: Robot not spawned after waiting.${NC}"
+            echo -e "${YELLOW}      Make sure the simulation launched correctly.${NC}\n"
+            return 1
+        fi
+    fi
+    
+    echo -e "${GREEN}OK: Robot spawned, ready for teleop${NC}"
     echo -e "${YELLOW}Starting teleop keyboard (CTRL-C to stop teleop).${NC}"
     echo -e "${YELLOW}Use WASD-like keys shown in the teleop prompt.${NC}\n"
+    export TURTLEBOT3_MODEL=burger
     ros2 run turtlebot3_teleop teleop_keyboard
 }
 
@@ -265,6 +348,7 @@ case "$choice" in
     1)
         kill_stale_sim_processes
         ensure_project_overlay
+        source_tb3_workspace
         set_tb3_model
         ensure_gz_resource_path
         echo -e "${YELLOW}Launching YOLO-RescueSim using turtle.sdf...${NC}"
@@ -285,6 +369,7 @@ case "$choice" in
     1b)
         kill_stale_sim_processes
         ensure_project_overlay
+        source_tb3_workspace
         ensure_venv_for_yolo
         set_tb3_model
         ensure_gz_resource_path
@@ -332,6 +417,7 @@ case "$choice" in
     1g)
         kill_stale_sim_processes
         ensure_project_overlay
+        source_tb3_workspace
         set_tb3_model
         ensure_gz_resource_path
 
@@ -390,14 +476,55 @@ case "$choice" in
         ros2 launch turtlebot3_gazebo empty_world.launch.py
         ;;
     3)
-        ensure_project_overlay
-        set_tb3_model
-        ensure_gz_resource_path
+        source_tb3_workspace
+        export TURTLEBOT3_MODEL=burger
+        
         echo -e "${YELLOW}Starting teleop (CTRL-C to stop)...${NC}\n"
+        
+        # Check if Gazebo is running
+        if ! check_gazebo_running; then
+            echo -e "${RED}ERROR: Gazebo is not running!${NC}"
+            echo -e "${YELLOW}      Start the simulation first using option 1, 1b, or 2.${NC}"
+            echo -e "${YELLOW}      Then run option 3 in a separate terminal.${NC}\n"
+            exit 1
+        fi
+        
+        echo -e "${GREEN}OK: Gazebo detected${NC}"
+        
+        # Check if ROS bridge is active
+        if ! check_ros_bridge_active; then
+            echo -e "${RED}ERROR: ROS 2 bridge not active!${NC}"
+            echo -e "${YELLOW}      You have Gazebo open, but it's not connected to ROS 2.${NC}"
+            echo -e "${YELLOW}      Close Gazebo, then use option 1 or 1b to launch properly.${NC}\n"
+            exit 1
+        fi
+        
+        echo -e "${GREEN}OK: ROS 2 bridge active${NC}"
+        
+        # Check if robot is spawned
+        if ! check_cmd_vel_topic; then
+            echo -e "${YELLOW}WARN: /cmd_vel topic not found. Waiting for robot...${NC}"
+            
+            for i in {1..6}; do
+                sleep 1
+                if check_cmd_vel_topic; then
+                    break
+                fi
+            done
+            
+            if ! check_cmd_vel_topic; then
+                echo -e "${RED}ERROR: Robot not spawned after waiting.${NC}"
+                echo -e "${YELLOW}      Make sure the simulation has fully loaded.${NC}\n"
+                exit 1
+            fi
+        fi
+        
+        echo -e "${GREEN}OK: Robot detected, starting teleop...${NC}\n"
         ros2 run turtlebot3_teleop teleop_keyboard
         ;;
     4)
         ensure_project_overlay
+        source_tb3_workspace
         set_tb3_model
         echo -e "${YELLOW}Starting manual waypoint recorder...${NC}"
         echo -e "${YELLOW}When prompted, type: d${NC}\n"

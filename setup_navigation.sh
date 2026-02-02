@@ -48,15 +48,20 @@ sudo apt-get install -y \
 # Make scripts executable
 echo ""
 echo "Setting up project scripts..."
-chmod +x "$HOME/Desktop/github/YOLO-RescueSim/project/auto_navigation.py"
-chmod +x "$HOME/Desktop/github/YOLO-RescueSim/project/navigation_tester.py"
-chmod +x "$HOME/Desktop/github/YOLO-RescueSim/project/launch/navigation_stack.launch.py"
-chmod +x "$HOME/Desktop/github/YOLO-RescueSim/project/launch/rescue_sim.launch.py"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_DIR="$SCRIPT_DIR"
+
+if [ -f "$PROJECT_DIR/project/auto_navigation.py" ]; then
+    chmod +x "$PROJECT_DIR/project/auto_navigation.py" 2>/dev/null || true
+fi
+if [ -f "$PROJECT_DIR/project/navigation_tester.py" ]; then
+    chmod +x "$PROJECT_DIR/project/navigation_tester.py" 2>/dev/null || true
+fi
+chmod +x "$PROJECT_DIR/project/launch/"*.py 2>/dev/null || true
 
 echo "OK: Scripts made executable"
 
 # Build colcon workspace if needed
-PROJECT_DIR="$HOME/Desktop/github/YOLO-RescueSim"
 if [ -f "$PROJECT_DIR/src/package.xml" ] || [ -f "$PROJECT_DIR/package.xml" ]; then
     echo ""
     echo "Building ROS workspace..."
